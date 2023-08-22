@@ -13,5 +13,3 @@ members = [
 [dependencies]
 ecs = { path = "crates/ecs" }
 ecs_derive = { path = "crates/ecs_derive" }
-
-downcast = "0.11.0"

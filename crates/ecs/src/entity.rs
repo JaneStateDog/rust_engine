@@ -1,4 +1,4 @@
-use crate::component::Component;
+use crate::component::*;
 
 use std::collections::HashMap;
 
@@ -22,7 +22,7 @@ impl Entity {
         }
     }
 
-    pub fn get_components(&mut self, name: &str) -> Option<&Vec<Component>> {
+    pub fn get_components_from_name(&mut self, name: &str) -> Option<&Vec<Component>> {
         self.component_hm.get(name)
     }
 }

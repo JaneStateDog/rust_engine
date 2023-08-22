@@ -4,8 +4,8 @@ use std::{
     any::Any,
 };
 
-// Components can not be unit or tuple structs. 
-// They can only be normal structs or enums.
+// Components can not be unit or tuple structs. They can only be normal structs or enums.
+// A component must always be owned/inside an Entity.
 pub type Component = Rc<RefCell<dyn ComponentTrait>>;
 
 pub trait ComponentTrait: std::fmt::Debug {
@@ -20,9 +20,7 @@ macro_rules! component {
     };
 }
 
-#[macro_export]
-macro_rules! as_mut {
-    ($e:expr, $t:ty) => {
-        $e.as_any().downcast_mut::<$t>()
-    };
-}
+/*pub fn get_raw_component<T: 'static>(component: &Rc<RefCell<dyn ComponentTrait>>) -> &mut T {
+    let mut b = component.borrow_mut();
+    b.as_any().downcast_mut::<T>().unwrap()
+}*/

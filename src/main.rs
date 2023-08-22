@@ -1,10 +1,9 @@
-#[macro_use]
-extern crate ecs;
 use ecs::{
     entity::*,
     component::*,
+    component,
 };
-use ecs_derive::ComponentTrait;
+use ecs_derive::*;
 
 use std::{
     rc::Rc,
@@ -20,20 +19,19 @@ fn main() {
     let mut entity = Entity::new(vec![
         component!(Player { move_speed: 10 }),
         component!(Light { intensity: 100 }),
-        component!(Player { move_speed: 15 }),
     ]);
 
-    println!("{:?}", entity.get_components("Player"));
+    println!("{:?}", entity.get_components_from_name("Player"));
 
     {
-        let a = Rc::clone(entity.get_components("Player").unwrap().get(0).unwrap());
-        let mut b = a.borrow_mut();
-        let mut component = as_mut!(b, Player).unwrap();
+        let start = entity.get_components_from_name("Player").unwrap().get(0).unwrap();
+        let mut b = start.borrow_mut();
+        let mut c = b.as_any().downcast_mut::<Player>().unwrap();
 
-        println!("{:?}", component);
-        component.move_speed = 3;
-        println!("{:?}", component);
+        println!("{:?}", c);
+        c.move_speed = 3;
+        println!("{:?}", c);
     }
 
-    println!("{:?}", entity.get_components("Player"));
+    println!("{:?}", entity.get_components_from_name("Player"));
 }
