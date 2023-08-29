@@ -1,28 +1,48 @@
-use crate::component::*;
+use crate::{
+    world::World,
+    component::Component,
+};
 
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    cell::RefCell,
+};
 
-pub struct Entity {
-    component_hm: HashMap<String, Vec<Component>>,
+pub type EntityID = usize;
+
+pub struct EntityBuilder<'a> {
+    world: &'a mut World,
+    entity_id: EntityID,
 }
-
-impl Entity {
-    pub fn new(component_vec: Vec<Component>) -> Self {
-        let mut component_hm = HashMap::new();
-        for component in component_vec {
-            let name = component.borrow().name();
-            component_hm.entry(name)
-                .or_insert(Vec::new())
-                .push(component);
-
-        }
-
+impl<'a> EntityBuilder<'a> {
+    pub fn new(world: &'a mut World, entity_id: EntityID) -> Self {
         Self {
-            component_hm: component_hm,
+            world,
+            entity_id,
         }
     }
 
-    pub fn get_components_from_name(&mut self, name: &str) -> Option<&Vec<Component>> {
-        self.component_hm.get(name)
+    pub fn with<T: Component>(self, component: T) -> Self {
+        // Look through all the component storages
+        for storage in self.world.storages.iter_mut() {
+            // If we're able to store the component in this storage
+            if let Some(i) = storage.as_any_mut().downcast_mut::<RefCell<HashMap<EntityID, T>>>() {
+                // Store it
+                i.get_mut().insert(self.entity_id, component);
+                return self;
+            }
+        }
+
+        // No matching component storage exists yet, so we'll make a new one.
+        let mut new_storage: HashMap<EntityID, T> = HashMap::new();
+        new_storage.insert(self.entity_id, component);
+        
+        self.world.storages.push(Box::new(RefCell::new(new_storage)));
+        
+        self
+    }
+
+    pub fn build(&self) -> EntityID {
+        self.entity_id
     }
 }

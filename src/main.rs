@@ -1,37 +1,52 @@
 use ecs::{
-    entity::*,
-    component::*,
-    component,
+    component::Component,
+    //system::System,
+    world::World,
 };
-use ecs_derive::*;
 
-use std::{
-    rc::Rc,
-    cell::RefCell,
-};
+#[derive(Debug)]
+struct Position {
+    x: i32,
+    y: i32,
+}
+impl Component for Position {}
+
+#[derive(Debug)]
+struct Player {
+    move_speed: i32,
+}
+impl Component for Player {}
 
 fn main() {
-    #[derive(ComponentTrait, Debug)]
-    struct Player { move_speed: i32 }
-    #[derive(ComponentTrait, Debug)]
-    struct Light { intensity: i32 }
+    let mut world = World::new();
 
-    let mut entity = Entity::new(vec![
-        component!(Player { move_speed: 10 }),
-        component!(Light { intensity: 100 }),
-    ]);
+    let entity = world
+        .spawn_entity()
+            .with(Position { x: 100, y: 100 })
+            .with(Player { move_speed: 5 })
+        .build();
 
-    println!("{:?}", entity.get_components_from_name("Player"));
+    let mut players = world.borrow_storage::<Player>().unwrap();
+    let mut positions = world.borrow_storage::<Position>().unwrap();
+    let zip = players.iter_mut().zip(positions.iter_mut());
+    let iter = zip.filter_map(
+        |(player, pos)| { 
+            Some((Some(player.1)?, Some(pos.1)?))
+        }
+    );
 
-    {
-        let start = entity.get_components_from_name("Player").unwrap().get(0).unwrap();
-        let mut b = start.borrow_mut();
-        let mut c = b.as_any().downcast_mut::<Player>().unwrap();
-
-        println!("{:?}", c);
-        c.move_speed = 3;
-        println!("{:?}", c);
+    for (player, pos) in iter {
+        if pos.x > 0 {
+            pos.x = 5;
+            println!("Woah, poggies");
+        }
     }
 
-    println!("{:?}", entity.get_components_from_name("Player"));
+    let zip = players.iter_mut().zip(positions.iter_mut());
+    let iter = zip.filter_map(
+        |(player, pos)| { 
+            Some((Some(player.1)?, Some(pos.1)?))
+        }
+    );
+    println!("{:?}", iter);
 }
