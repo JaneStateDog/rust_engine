@@ -1,48 +1,54 @@
 use crate::{
     world::World,
     component::Component,
+    storage::Storage,
 };
 
 use std::{
-    collections::HashMap,
     cell::RefCell,
+    any::TypeId,
 };
 
-pub type EntityID = usize;
-
+// -- ENTITY BUILDER --
 pub struct EntityBuilder<'a> {
     world: &'a mut World,
-    entity_id: EntityID,
+    entity_id: usize,
 }
+
 impl<'a> EntityBuilder<'a> {
-    pub fn new(world: &'a mut World, entity_id: EntityID) -> Self {
+    pub fn new(world: &'a mut World, entity_id: usize) -> Self {
         Self {
             world,
             entity_id,
         }
     }
 
-    pub fn with<T: Component>(self, component: T) -> Self {
-        // Look through all the component storages
-        for storage in self.world.storages.iter_mut() {
-            // If we're able to store the component in this storage
-            if let Some(i) = storage.as_any_mut().downcast_mut::<RefCell<HashMap<EntityID, T>>>() {
-                // Store it
-                i.get_mut().insert(self.entity_id, component);
+    pub fn with<C: Component>(self, component: C) -> Self {
+        // Get the storage for the component we're given,
+        if let Some(i) = self.world.storages.get_mut(&TypeId::of::<C>()) {
+            // and if we're able to store it there,
+            if let Some(storage) = i.as_any_mut().downcast_mut::<RefCell<Storage<C>>>() {
+                // then store it.
+                storage.get_mut()[self.entity_id] = Some(component);
                 return self;
             }
         }
 
-        // No matching component storage exists yet, so we'll make a new one.
-        let mut new_storage: HashMap<EntityID, T> = HashMap::new();
-        new_storage.insert(self.entity_id, component);
-        
-        self.world.storages.push(Box::new(RefCell::new(new_storage)));
+        // No matching component storage exists yet, so we'll make a new one
+        // and fill it with None for all other entities.
+        let mut new_storage: Storage<C> = Vec::new();
+        for _ in 0..self.world.entity_capacity { new_storage.push(None); }
+
+        // Store the component.
+        new_storage[self.entity_id] = Some(component);
+
+        // Give world the new component storage.
+        self.world.storages.insert(TypeId::of::<C>(), Box::new(RefCell::new(new_storage)));
         
         self
     }
 
-    pub fn build(&self) -> EntityID {
+    pub fn build(&self) -> usize {
         self.entity_id
     }
 }

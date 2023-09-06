@@ -1,27 +1,48 @@
-use crate::{
-    component::Component,
-    entity::EntityID,
-};
+use crate::component::Component;
 
 use std::{
     any::Any,
     cell::RefCell,
-    collections::HashMap,
+    fmt::{ Debug, Formatter, Result },
 };
 
-pub trait Storage {
+// -- STORAGE --
+pub type Storage<C> = Vec<Option<C>>;
+
+// -- ANY STORAGE --
+pub trait AnyStorage {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
+
+    fn push_none(&mut self);
+
+    fn drop_entity(&mut self, entity_id: usize);
+
+    fn debug_text(&self) -> String;
 }
 
-impl<T: 'static> Storage for RefCell<HashMap<EntityID, T>>
+impl<C> AnyStorage for RefCell<Storage<C>>
 where
-    T: Component,
+    C: Component,
 {
-    fn as_any(&self) -> &dyn Any {
-        self as &dyn Any
+    fn as_any(&self) -> &dyn Any { self as &dyn Any }
+    fn as_any_mut(&mut self) -> &mut dyn Any { self as &mut dyn Any }
+
+    fn push_none(&mut self) {
+        self.borrow_mut().push(None);
     }
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self as &mut dyn Any
+
+    fn drop_entity(&mut self, entity_id: usize) {
+        self.borrow_mut()[entity_id] = None;
+    }
+
+    fn debug_text(&self) -> String {
+        format!("{:?}", self.borrow()).into()
+    }
+}
+
+impl Debug for dyn AnyStorage {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "{}", self.debug_text())
     }
 }
