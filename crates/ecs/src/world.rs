@@ -1,5 +1,5 @@
 use crate::{
-    component::*,
+    component::{*, self},
     entity::*,
     storage::*,
     query::*,
@@ -67,12 +67,17 @@ impl World {
         self.open_entity_ids.push(entity_id)
     }
 
-    pub fn get_component_from_entity<C: Component>(&mut self, entity_id: usize) {
+    pub fn get_component_from_entity<C: Component>(&mut self, entity_id: usize) -> Option<&mut C>{
         if let Some(i) = self.storages.get(&TypeId::of::<C>()) {
             if let Some(storage) = i.as_any().downcast_ref::<RefCell<Storage<C>>>() {
-                
+                let mut borrow = storage.borrow_mut();
+                if let Some(component) = &borrow[entity_id] {
+                    return Some(&mut component);
+                }
             }
         }
+
+        None
     }
 
     pub fn borrow_storage<'a, C: Component>(&'a self) -> Option<RefMut<'a, Storage<C>>> {
