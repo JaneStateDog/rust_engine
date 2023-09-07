@@ -1,1 +1,1 @@
-pub trait Component: 'static + std::fmt::Debug {}
+pub trait Component: 'static {}
