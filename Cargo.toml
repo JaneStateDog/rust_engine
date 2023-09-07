@@ -5,11 +5,15 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[workspace]
-members = [
-    "crates/*",
-]
+#[workspace]
+#members = [
+#    "crates/*",
+#]
 
 [dependencies]
-ecs = { path = "crates/ecs" }
-ecs_derive = { path = "crates/ecs_derive" }
+#ecs = { path = "crates/ecs" }
+#ecs_derive = { path = "crates/ecs_derive" }
+
+[build-dependencies]
+walkdir = "2.4.0"
+cc = "1.0.83"
