@@ -1,0 +1,1 @@
+pub trait Component: 'static + std::fmt::Debug {}
